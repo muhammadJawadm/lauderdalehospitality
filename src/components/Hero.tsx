@@ -1,10 +1,10 @@
-import { FaPhoneAlt, FaShieldAlt, FaClock, FaStar } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaPhoneAlt, FaShieldAlt, FaStar } from "react-icons/fa";
 import { PHONE_DISPLAY, PHONE_HREF } from "../lib/constants";
 import heroBg from "../assets/hero-bg.jpg";
 
 const BADGES = [
   { icon: FaShieldAlt, label: "Licensed & Insured" },
-  { icon: FaClock, label: "24/7 Availability" },
   { icon: FaStar, label: "5-Star Chauffeurs" },
 ];
 
@@ -33,12 +33,12 @@ export default function Hero() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <a
-            href="#reserve"
+          <Link
+            to="/booking"
             className="inline-flex items-center justify-center rounded-full bg-linear-to-br from-accent to-accent-dark px-8 py-4 text-sm font-bold text-ink shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(255,183,3,0.45)]"
           >
             Reserve Online
-          </a>
+          </Link>
           <a
             href={PHONE_HREF}
             className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 text-sm font-bold text-white transition-all hover:border-white hover:bg-white/10"

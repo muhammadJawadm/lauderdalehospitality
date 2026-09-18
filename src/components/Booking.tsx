@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { FaPlane, FaShip, FaArrowRight } from "react-icons/fa";
 import { PHONE_DISPLAY, PHONE_HREF } from "../lib/constants";
 
@@ -15,14 +16,14 @@ function LinkList({ title, icon: Icon, items }: { title: string; icon: React.Ele
       </div>
       <div className="grid grid-cols-2 gap-2.5 border-t pt-4 border-amber-50/20">
         {items.map((item) => (
-          <a
+          <Link
             key={item}
-            href="#reserve"
+            to="/booking"
             className="group flex items-center justify-center rounded-lg bg-primary/50 px-4.5 py-3.5 text-xs font-bold text-white transition-colors hover:bg-accent hover:text-black"
           >
             {item}
             <FaArrowRight size={9} className="opacity-0 transition-opacity group-hover:opacity-100" />
-          </a>
+          </Link>
         ))}
       </div>
     </div>

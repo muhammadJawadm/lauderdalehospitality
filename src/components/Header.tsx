@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { FaPhoneAlt, FaBars, FaTimes } from "react-icons/fa";
 import { NAV_LINKS, PHONE_DISPLAY, PHONE_HREF } from "../lib/constants";
 import logo from "../assets/logo.png"
@@ -50,8 +51,8 @@ export default function Header() {
             <FaPhoneAlt size={11} />
             {PHONE_DISPLAY}
           </a>
-          <a
-            href={PHONE_HREF}
+          <Link
+            to="/booking"
             className={`inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-bold shadow-sm transition-all hover:-translate-y-0.5 ${
               scrolled
                 ? "bg-linear-to-br from-accent to-accent-dark text-ink hover:shadow-[0_4px_15px_rgba(255,183,3,0.4)]"
@@ -59,7 +60,7 @@ export default function Header() {
             }`}
           >
             Book Now
-          </a>
+          </Link>
         </div>
 
         {/* Mobile toggle */}
