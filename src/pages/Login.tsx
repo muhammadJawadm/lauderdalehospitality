@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import BookingHeader from "../components/bookings/BookingHeader";
@@ -9,8 +9,6 @@ import { inputClass, labelClass, primaryButtonClass } from "../lib/bookingTypes"
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
