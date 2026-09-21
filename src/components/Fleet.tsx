@@ -1,4 +1,3 @@
-import vehicleImg from "../assets/vehicle-placeholder.jpg";
 import LuxurySUVs from "../assets/Luxury_SUVs.jpg";
 import MercedesSprinterVans from "../assets/Mercedes.jpg";
 import ExecutiveShuttleVehicles from "../assets/Executive.avif";
@@ -6,11 +5,10 @@ import MiniCoachesBuses from "../assets/Mini.avif";
 import GroupTransportSolutions from "../assets/Group.avif";
 
 const VEHICLES = [
-  { name: "Executive Sedans", desc: "Perfect for solo travelers or couples wanting private, quiet, and executive transfers.", image: vehicleImg },
-  { name: "Luxury SUVs", desc: "Premium spacious SUVs (Cadillac Escalade, Chevy Suburban) offering ultimate comfort and extra luggage storage.", image: LuxurySUVs },
+   { name: "Luxury SUVs", desc: "Premium spacious SUVs (Cadillac Escalade, Chevy Suburban) offering ultimate comfort and extra luggage storage.", image: LuxurySUVs },
   { name: "Mercedes Sprinter Vans", desc: "High-top luxury passenger Sprinters configured for up to 14 guests. Ideal for groups, families, and corporate outings.", image: MercedesSprinterVans },
   { name: "Executive Shuttle Vehicles", desc: "Spacious executive shuttles that combine large group capacity with first-class airport and cruise port transit comfort.", image: ExecutiveShuttleVehicles },
-  { name: "Mini Coaches & Buses", desc: "High-capacity mini coaches designed for tour groups, corporate outings, and large events.", image: MiniCoachesBuses },
+  { name: "Mini Coaches & Buses", desc: "High-capacity mini coaches designed for tour groups, corporate outings, and large events.", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOTJOFY8R9-dV6mACNOyZi7mH4-x15MyBoBl5coheHOA&s=10" },
   { name: "Group Transport Solutions", desc: "Custom multi-vehicle logistics plans, providing unified fleet coordination for conventions, weddings, and corporate events.", image: GroupTransportSolutions },
 ];
 

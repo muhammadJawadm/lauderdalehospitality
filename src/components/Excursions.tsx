@@ -1,6 +1,6 @@
 import {
-  FaWater, FaShoppingBag, FaHotel, FaShip, FaTaxi,
-  FaLeaf, FaLandmark, FaSpa,
+  FaBriefcase, FaCarSide, FaWater, FaShoppingBag, FaHotel,
+  FaFutbol, FaGlassCheers,
 } from "react-icons/fa";
 import cruise from "../assets/cruise.avif";
 import group from "../assets/group_cha.avif";
@@ -10,14 +10,13 @@ import everglades from "../assets/Everglades.avif";
 
 
 const ATTRACTIONS = [
+  { icon: FaBriefcase, name: "Corporate Groups" },
+  { icon: FaCarSide, name: "Private Transportation" },
   { icon: FaWater, name: "Everglades Tours" },
   { icon: FaShoppingBag, name: "Sawgrass Mills Mall" },
   { icon: FaHotel, name: "Hard Rock Hotel" },
-  { icon: FaShip, name: "Jungle Queen Cruise" },
-  { icon: FaTaxi, name: "Water Taxi Transfers" },
-  { icon: FaLeaf, name: "Gumbo Limbo Nature Center" },
-  { icon: FaLandmark, name: "Morikami Museum" },
-  { icon: FaSpa, name: "Butterfly World" },
+  { icon: FaFutbol, name: "Sporting Events" },
+  { icon: FaGlassCheers, name: "Nightlife and Dinner" },
 ];
 
 const CATEGORIES = [
@@ -34,7 +33,7 @@ export default function Excursions() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-white/90">Local Tours</span>
           <h2 className="mt-3 font-display text-3xl font-extrabold text-white sm:text-4xl">
-            Excursions &amp; Attractions
+            Additional Transportation
           </h2>
           <p className="mt-4 text-black/60">
             Make the most of your South Florida stay. We offer dedicated private charters to all top
@@ -44,10 +43,12 @@ export default function Excursions() {
 
         <div className="mt-16 grid gap-6 lg:grid-cols-2">
           <div className="grid grid-cols-2 gap-4">
-            {ATTRACTIONS.map(({ icon: Icon, name }) => (
+            {ATTRACTIONS.map(({ icon: Icon, name }, i) => (
               <div
                 key={name}
-                className="flex items-center gap-3 rounded-2xl bg-white/15 px-5 py-2 backdrop-blur-sm transition-colors hover:bg-white/25 sm:gap-4 sm:px-8"
+                className={`flex items-center gap-3 rounded-2xl bg-white/15 px-5 py-2 backdrop-blur-sm transition-colors hover:bg-white/25 sm:gap-4 sm:px-8 ${
+                  i === ATTRACTIONS.length - 1 && ATTRACTIONS.length % 2 !== 0 ? "col-span-2" : ""
+                }`}
               >
                 <span className="flex h-12 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white">
                   <Icon size={20} />
