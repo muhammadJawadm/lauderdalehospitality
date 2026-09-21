@@ -1,7 +1,6 @@
 import LuxurySUVs from "../assets/Luxury_SUVs.jpg";
 import MercedesSprinterVans from "../assets/Mercedes.jpg";
 import ExecutiveShuttleVehicles from "../assets/Executive.avif";
-import MiniCoachesBuses from "../assets/Mini.avif";
 import GroupTransportSolutions from "../assets/Group.avif";
 
 const VEHICLES = [
