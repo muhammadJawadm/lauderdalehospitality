@@ -16,8 +16,6 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const from = (location.state as { from?: string } | null)?.from || "/booking";
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
