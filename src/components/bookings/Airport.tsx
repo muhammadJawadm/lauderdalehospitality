@@ -205,7 +205,7 @@ export default function Airport() {
           >
             <option value="" disabled>Select Transfer Type</option>
             <option value="One Way">One way</option>
-            <option value="Tow Way">Two way</option>
+            <option value="Tow Way">Roundtrip</option>
           </select>
         </div>
 
@@ -292,7 +292,7 @@ export default function Airport() {
         </div>
 
         <div className={sectionHeaderClass}>
-          <p className="text-lg">Airline Details</p>
+          <p className="text-lg">Flight Details</p>
         </div>
         <div>
           <label htmlFor="flight_number" className={labelClass}>Flight Number</label>

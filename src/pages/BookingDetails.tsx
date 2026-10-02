@@ -70,7 +70,7 @@ export default function BookingDetails() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <h5 className="font-display text-xl font-semibold text-ink">Airline Details</h5>
+                  <h5 className="font-display text-xl font-semibold text-ink">Flight Details</h5>
                   <div className="flex flex-col items-center justify-around gap-5 text-center sm:flex-row">
                     <div className="space-y-3 sm:space-y-7">
                       <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Airline code</h5>

@@ -7,7 +7,7 @@ import Inquiries from "./Inquiries";
 const TABS = [
   { id: 1, label: "Airport", icon: FaPlane },
   { id: 2, label: "Cruise Port", icon: FaShip },
-  { id: 3, label: "Inquiries", icon: FaQuestionCircle },
+  { id: 3, label: "Other Inquiries", icon: FaQuestionCircle },
 ] as const;
 
 export default function BookingOptions() {
