@@ -17,6 +17,8 @@ export default function BookingSummary() {
 
   if (!booking) return <Navigate to="/booking" replace />;
 
+  const isCruiseBooking = booking.bookingType === "CS" || booking.bookingType === "CP";
+
   return (
     <div className="min-h-screen bg-bg-light">
       <BookingHeader />
@@ -66,9 +68,19 @@ export default function BookingSummary() {
               <div className="border-b border-gray-100" />
               <SummaryRow label="To" value={booking.dropoffLoc} />
               <div className="border-b border-gray-100" />
-              <SummaryRow label="Pickup Date" value={booking.pickupDate} />
-              <div className="border-b border-gray-100" />
-              <SummaryRow label="Pickup Time" value={booking.pickupTime} />
+              {isCruiseBooking ? (
+                <>
+                  <SummaryRow label="Cruise Date" value={booking.cruiseDate} />
+                  <div className="border-b border-gray-100" />
+                  <SummaryRow label="Departure Time" value={booking.departureTime} />
+                </>
+              ) : (
+                <>
+                  <SummaryRow label="Pickup Date" value={booking.pickupDate} />
+                  <div className="border-b border-gray-100" />
+                  <SummaryRow label="Pickup Time" value={booking.pickupTime} />
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -40,11 +40,17 @@ export default function BookingDetails() {
                 <div>
                   <p className="text-sm text-body"><span className="font-semibold text-ink">From:</span> {booking.pickupLoc}</p>
                   <p className="text-sm text-body"><span className="font-semibold text-ink">To:</span> {booking.dropoffLoc}</p>
-                  <p className="text-sm text-body"><span className="font-semibold text-ink">Pickup:</span> {booking.pickupTime}</p>
+                  <p className="text-sm text-body">
+                    <span className="font-semibold text-ink">{isCruiseBooking ? "Departure:" : "Pickup:"}</span>{" "}
+                    {isCruiseBooking ? booking.departureTime : booking.pickupTime}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-body"><span className="font-semibold text-ink">Passengers:</span> {booking.adults}</p>
-                  <p className="text-sm text-body"><span className="font-semibold text-ink">Date:</span> {booking.pickupDate}</p>
+                  <p className="text-sm text-body">
+                    <span className="font-semibold text-ink">Date:</span>{" "}
+                    {isCruiseBooking ? booking.cruiseDate : booking.pickupDate}
+                  </p>
                 </div>
               </div>
             </div>
@@ -53,17 +59,21 @@ export default function BookingDetails() {
               {isCruiseBooking ? (
                 <div className="space-y-6">
                   <h5 className="font-display text-xl font-semibold text-ink">Cruise Details</h5>
-                  <div className="flex flex-col items-center justify-around gap-5 text-center sm:flex-row">
+                  <div className="grid grid-cols-2 gap-5 text-center sm:grid-cols-4">
                     <div className="space-y-3 sm:space-y-7">
-                      <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Cruise Line / Ship</h5>
+                      <h5 className="font-display text-base font-medium text-ink sm:text-xl">Cruise Line</h5>
+                      <p className="text-body">{booking.cruiseLine}</p>
+                    </div>
+                    <div className="space-y-3 sm:space-y-7">
+                      <h5 className="font-display text-base font-medium text-ink sm:text-xl">Cruise Ship</h5>
                       <p className="text-body">{booking.cruiseShip}</p>
                     </div>
                     <div className="space-y-3 sm:space-y-7">
-                      <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Cruise Date</h5>
-                      <p className="text-body">{booking.cruiseDate}</p>
+                      <h5 className="font-display text-base font-medium text-ink sm:text-xl">Departure Time</h5>
+                      <p className="text-body">{booking.departureTime}</p>
                     </div>
                     <div className="space-y-3 sm:space-y-7">
-                      <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Return Trip</h5>
+                      <h5 className="font-display text-base font-medium text-ink sm:text-xl">Return Trip</h5>
                       <p className="text-body">{booking.returnTrip ? "Yes" : "No"}</p>
                     </div>
                   </div>

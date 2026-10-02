@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass, type LocationDoc } from "../../lib/bookingTypes";
-import CommonTimeSlots from "./CommonTimeSlots";
+import CommonDepartureTime from "./CommonDepartureTime";
 import LoaderAnimation from "../LoaderAnimation";
 
 interface CruiseFormData {
@@ -15,9 +15,9 @@ interface CruiseFormData {
   comments: string;
   adults: string;
   cruiseDate: string;
+  cruiseLine: string;
   cruiseShip: string;
-  pickupDate: string;
-  pickupTime: string;
+  departureTime: string;
   returnTrip: boolean;
   pickupLoc: string;
   dropoffLoc: string;
@@ -26,7 +26,7 @@ interface CruiseFormData {
 const initialFormData: CruiseFormData = {
   bookingType: "CS",
   fName: "", lName: "", email: "", phone: "", comments: "", adults: "",
-  cruiseDate: "", cruiseShip: "", pickupDate: "", pickupTime: "",
+  cruiseDate: "", cruiseLine: "", cruiseShip: "", departureTime: "",
   returnTrip: false, pickupLoc: "", dropoffLoc: "",
 };
 
@@ -202,9 +202,14 @@ export default function CruisePort() {
           <input type="date" id="date_cruise" className={inputClass} value={formData.cruiseDate} onChange={(e) => updateFormData({ cruiseDate: e.target.value })} required />
         </div>
         <div>
-          <label htmlFor="cruiseShip" className={labelClass}>Cruise Line / Cruise Ship</label>
-          <input type="text" id="cruiseShip" className={inputClass} placeholder="----" value={formData.cruiseShip} onChange={(e) => updateFormData({ cruiseShip: e.target.value })} required />
+          <label htmlFor="cruiseLine" className={labelClass}>Cruise Line</label>
+          <input type="text" id="cruiseLine" className={inputClass} placeholder="e.g. Royal Caribbean" value={formData.cruiseLine} onChange={(e) => updateFormData({ cruiseLine: e.target.value })} required />
         </div>
+        <div>
+          <label htmlFor="cruiseShip" className={labelClass}>Cruise Ship</label>
+          <input type="text" id="cruiseShip" className={inputClass} placeholder="e.g. Icon of the Seas" value={formData.cruiseShip} onChange={(e) => updateFormData({ cruiseShip: e.target.value })} required />
+        </div>
+        <CommonDepartureTime updateFormData={updateFormData} formData={formData} />
         <div className="space-y-2">
           <p className="text-sm text-body">Return Trip?</p>
           <div className="flex items-center gap-2.5">
@@ -233,15 +238,6 @@ export default function CruisePort() {
           <label htmlFor="adults" className={labelClass}>Passengers</label>
           <input type="number" id="adults" min={1} className={inputClass} placeholder="1" value={formData.adults} onChange={(e) => updateFormData({ adults: e.target.value })} required />
         </div>
-
-        <div className={sectionHeaderClass}>
-          <p className="text-lg">Pickup</p>
-        </div>
-        <div>
-          <label htmlFor="pickup_date" className={labelClass}>Pickup date</label>
-          <input type="date" id="pickup_date" className={inputClass} value={formData.pickupDate} onChange={(e) => updateFormData({ pickupDate: e.target.value })} required />
-        </div>
-        <CommonTimeSlots updateFormData={updateFormData} formData={formData} />
 
         <div className={sectionHeaderClass}>
           <p className="text-lg">Location</p>

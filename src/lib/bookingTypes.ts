@@ -12,20 +12,22 @@ export interface BookingState {
   email: string;
   phone: string;
   comments: string;
-  pickupDate: string;
-  pickupTime: string;
   pickupLoc: string;
   dropoffLoc: string;
   transferType: string;
   perPersonPrice: number;
   totalPrice: number;
   // Airport-specific
+  pickupDate?: string;
+  pickupTime?: string;
   airline?: string;
   arrival?: string;
   flightNum?: string;
   // Cruise-specific
   cruiseDate?: string;
+  cruiseLine?: string;
   cruiseShip?: string;
+  departureTime?: string;
   returnTrip?: boolean;
 }
 

@@ -319,9 +319,7 @@ export default function Airport() {
             required
           />
         </div>
-        {formData.bookingType === "AS" && (
-          <CommonAirports updateFormData={updateFormData} formData={formData} />
-        )}
+        <CommonAirports updateFormData={updateFormData} formData={formData} />
         <div>
           <label htmlFor="airport" className={labelClass}>Airport</label>
           <select
