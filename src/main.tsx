@@ -6,13 +6,16 @@ import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
+import { BookingCartProvider } from './contexts/BookingCartContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
-        <ToastContainer />
+        <BookingCartProvider>
+          <App />
+          <ToastContainer />
+        </BookingCartProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

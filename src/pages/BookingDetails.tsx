@@ -29,9 +29,9 @@ export default function BookingDetails() {
             </Link>
           </div>
 
-          <div className="mx-auto max-w-[848px] space-y-8">
+          <div className="mx-auto max-w-212 space-y-8">
             <div className="flex items-center gap-2">
-              <div className="size-[30px] shrink-0 rounded-full bg-primary" />
+              <div className="size-7.5 shrink-0 rounded-full bg-primary" />
               <h5 className="font-display text-xl font-semibold text-ink">{BOOKING_TYPE_LABELS[booking.bookingType]}</h5>
             </div>
 

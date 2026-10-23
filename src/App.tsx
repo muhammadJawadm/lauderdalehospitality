@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Booking from "./pages/Booking";
+import BookingCart from "./pages/BookingCart";
 import BookingDetails from "./pages/BookingDetails";
 import BookingSummary from "./pages/BookingSummary";
 import Checkout from "./pages/Checkout";
@@ -22,6 +23,14 @@ export default function App() {
         element={
           <PanelProtectedRoute user={currentUser}>
             <Booking />
+          </PanelProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking/cart"
+        element={
+          <PanelProtectedRoute user={currentUser}>
+            <BookingCart />
           </PanelProtectedRoute>
         }
       />

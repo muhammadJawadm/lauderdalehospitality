@@ -1,17 +1,15 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass, type LocationDoc } from "../../lib/bookingTypes";
+import { useState } from "react";
+import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass } from "../../lib/bookingTypes";
+import { useLocations, resolveRouteFare } from "../../lib/useLocations";
+import { useBookingCart } from "../../contexts/BookingCartContext";
+import type { CruiseLeg } from "../../lib/cartTypes";
 import CommonDepartureTime from "./CommonDepartureTime";
+import CommonCruiseLines from "./CommonCruiseLines";
+import CommonPassengers from "./CommonPassengers";
 import LoaderAnimation from "../LoaderAnimation";
 
-interface CruiseFormData {
+interface CruiseFormState {
   bookingType: "CS" | "CP";
-  fName: string;
-  lName: string;
-  email: string;
-  phone: string;
   comments: string;
   adults: string;
   cruiseDate: string;
@@ -23,49 +21,35 @@ interface CruiseFormData {
   dropoffLoc: string;
 }
 
-const initialFormData: CruiseFormData = {
+const initialFormData: CruiseFormState = {
   bookingType: "CS",
-  fName: "", lName: "", email: "", phone: "", comments: "", adults: "",
-  cruiseDate: "", cruiseLine: "", cruiseShip: "", departureTime: "",
-  returnTrip: false, pickupLoc: "", dropoffLoc: "",
+  comments: "",
+  adults: "2",
+  cruiseDate: "",
+  cruiseLine: "",
+  cruiseShip: "",
+  departureTime: "",
+  returnTrip: false,
+  pickupLoc: "",
+  dropoffLoc: "",
 };
 
-export default function CruisePort() {
-  const [propertyLocations, setPropertyLocations] = useState<LocationDoc[]>([]);
-  const [cruisePortLocations, setCruisePortLocations] = useState<LocationDoc[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+interface CruisePortProps {
+  onComplete: (leg: CruiseLeg) => void;
+  /** Prefills the hotel pickup/dropoff location, e.g. the hotel just dropped off at on an earlier Airport leg. */
+  prefillHotel?: string;
+}
+
+export default function CruisePort({ onComplete, prefillHotel }: CruisePortProps) {
+  const { groupA: propertyLocations, groupB: cruisePortLocations, isLoading: locationsLoading } = useLocations("Hotel", "Port");
+  const { guestInfo, updateGuestInfo, setLastHotel } = useBookingCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [formData, setFormData] = useState<CruiseFormData>(initialFormData);
+  const [formData, setFormData] = useState<CruiseFormState>({ ...initialFormData, pickupLoc: prefillHotel ?? "" });
+  const [contact, setContact] = useState({ fName: guestInfo.fName, lName: guestInfo.lName, email: guestInfo.email, phone: guestInfo.phone });
 
-  const router = useNavigate();
-
-  const updateFormData = (newData: Partial<CruiseFormData>) => {
+  const updateFormData = (newData: Partial<CruiseFormState>) => {
     setFormData((prevData) => ({ ...prevData, ...newData }));
-  };
-
-  const fetchLocations = async () => {
-    try {
-      setIsLoading(true);
-      const querySnapshot = await getDocs(
-        query(collection(db, "locations"), where("locationType", "in", ["Hotel", "Port"]))
-      );
-      const propertyData: LocationDoc[] = [];
-      const cruisePortData: LocationDoc[] = [];
-      querySnapshot.docs.forEach((doc) => {
-        const location = { id: doc.id, ...doc.data() } as LocationDoc;
-        if (location.locationType === "Hotel") {
-          propertyData.push(location);
-        } else if (location.locationType === "Port") {
-          cruisePortData.push(location);
-        }
-      });
-      setPropertyLocations(propertyData);
-      setCruisePortLocations(cruisePortData);
-    } catch (error) {
-      console.error("Error fetching locations: ", error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const cruisePortHandleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -88,47 +72,32 @@ export default function CruisePort() {
     e.preventDefault();
     setMessage("");
     try {
-      setIsLoading(true);
-      const routesCollectionRef = collection(db, "routes");
-      const query1 = query(
-        routesCollectionRef,
-        where("routeFrom", "==", formData.pickupLoc),
-        where("routeTo", "==", formData.dropoffLoc)
-      );
-      const query2 = query(
-        routesCollectionRef,
-        where("routeFrom", "==", formData.dropoffLoc),
-        where("routeTo", "==", formData.pickupLoc)
-      );
-      const [snapshot1, snapshot2] = await Promise.all([getDocs(query1), getDocs(query2)]);
-      const existingRoute = snapshot1.docs[0] || snapshot2.docs[0];
-      if (!existingRoute) {
+      setIsSubmitting(true);
+      const fare = await resolveRouteFare(formData.pickupLoc, formData.dropoffLoc, formData.adults);
+      if (!fare) {
         setMessage("The chosen route is unavailable. Please select a different route.");
         return;
       }
-      const routeData = existingRoute.data();
-      const perPerson = parseInt(routeData?.routeFare);
-      const totalFare = perPerson * parseInt(formData.adults);
-      const finalData = {
+      updateGuestInfo(contact);
+      const hotel = formData.bookingType === "CS" ? formData.pickupLoc : formData.dropoffLoc;
+      if (hotel) setLastHotel(hotel);
+      const leg: CruiseLeg = {
+        id: crypto.randomUUID(),
+        legType: "cruise",
         ...formData,
         transferType: formData.returnTrip ? "Two Way" : "One Way",
-        perPersonPrice: perPerson,
-        totalPrice: totalFare,
+        ...fare,
       };
-      router("/booking/details", { state: finalData });
+      onComplete(leg);
     } catch (error) {
       console.error("Error checking route or submitting booking:", error);
       alert("Failed to submit booking. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  if (isLoading) return <LoaderAnimation />;
+  if (locationsLoading || isSubmitting) return <LoaderAnimation />;
 
   return (
     <div className="space-y-7">
@@ -175,19 +144,19 @@ export default function CruisePort() {
         </div>
         <div>
           <label htmlFor="first_name" className={labelClass}>First Name</label>
-          <input type="text" id="first_name" className={inputClass} placeholder="John" value={formData.fName} onChange={(e) => updateFormData({ fName: e.target.value })} required />
+          <input type="text" id="first_name" className={inputClass} placeholder="John" value={contact.fName} onChange={(e) => setContact({ ...contact, fName: e.target.value })} required />
         </div>
         <div>
           <label htmlFor="last_name" className={labelClass}>Last Name</label>
-          <input type="text" id="last_name" className={inputClass} placeholder="Doe" value={formData.lName} onChange={(e) => updateFormData({ lName: e.target.value })} required />
+          <input type="text" id="last_name" className={inputClass} placeholder="Doe" value={contact.lName} onChange={(e) => setContact({ ...contact, lName: e.target.value })} required />
         </div>
         <div>
           <label htmlFor="email" className={labelClass}>Email</label>
-          <input type="email" id="email" className={inputClass} placeholder="john.doe@example.com" value={formData.email} onChange={(e) => updateFormData({ email: e.target.value })} required />
+          <input type="email" id="email" className={inputClass} placeholder="john.doe@example.com" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} required />
         </div>
         <div>
           <label htmlFor="phone" className={labelClass}>Phone #</label>
-          <input type="tel" id="phone" className={inputClass} placeholder="Phone #" value={formData.phone} onChange={(e) => updateFormData({ phone: e.target.value })} required />
+          <input type="tel" id="phone" className={inputClass} placeholder="Phone #" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} required />
         </div>
         <div>
           <label htmlFor="comments" className={labelClass}>Comments</label>
@@ -201,10 +170,7 @@ export default function CruisePort() {
           <label htmlFor="date_cruise" className={labelClass}>Date of Cruise</label>
           <input type="date" id="date_cruise" className={inputClass} value={formData.cruiseDate} onChange={(e) => updateFormData({ cruiseDate: e.target.value })} required />
         </div>
-        <div>
-          <label htmlFor="cruiseLine" className={labelClass}>Cruise Line</label>
-          <input type="text" id="cruiseLine" className={inputClass} placeholder="e.g. Royal Caribbean" value={formData.cruiseLine} onChange={(e) => updateFormData({ cruiseLine: e.target.value })} required />
-        </div>
+        <CommonCruiseLines updateFormData={updateFormData} formData={formData} />
         <div>
           <label htmlFor="cruiseShip" className={labelClass}>Cruise Ship</label>
           <input type="text" id="cruiseShip" className={inputClass} placeholder="e.g. Icon of the Seas" value={formData.cruiseShip} onChange={(e) => updateFormData({ cruiseShip: e.target.value })} required />
@@ -234,10 +200,7 @@ export default function CruisePort() {
         <div className={sectionHeaderClass}>
           <p className="text-lg">No. Passengers</p>
         </div>
-        <div>
-          <label htmlFor="adults" className={labelClass}>Passengers</label>
-          <input type="number" id="adults" min={1} className={inputClass} placeholder="1" value={formData.adults} onChange={(e) => updateFormData({ adults: e.target.value })} required />
-        </div>
+        <CommonPassengers value={formData.adults} onChange={(v) => updateFormData({ adults: v })} />
 
         <div className={sectionHeaderClass}>
           <p className="text-lg">Location</p>

@@ -1,87 +1,52 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass, type LocationDoc } from "../../lib/bookingTypes";
+import { useState } from "react";
+import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass } from "../../lib/bookingTypes";
+import { useLocations, resolveRouteFare } from "../../lib/useLocations";
+import { useBookingCart } from "../../contexts/BookingCartContext";
+import type { AirportLeg } from "../../lib/cartTypes";
 import CommonAirports from "./CommonAirports";
 import CommonTimeSlots from "./CommonTimeSlots";
+import CommonPassengers from "./CommonPassengers";
 import LoaderAnimation from "../LoaderAnimation";
 
-interface AirportFormData {
+interface AirportFormState {
   adults: string;
   airline: string;
   arrival: string;
   bookingType: "AS" | "AP";
   comments: string;
   dropoffLoc: string;
-  email: string;
-  fName: string;
   flightNum: string;
-  lName: string;
-  phone: string;
   pickupDate: string;
   pickupLoc: string;
   pickupTime: string;
-  totalPrice: string;
   transferType: string;
 }
 
-const initialFormData: AirportFormData = {
-  adults: "",
+const initialFormData: AirportFormState = {
+  adults: "2",
   airline: "",
   arrival: "",
   bookingType: "AS",
   comments: "",
   dropoffLoc: "",
-  email: "",
-  fName: "",
   flightNum: "",
-  lName: "",
-  phone: "",
   pickupDate: "",
   pickupLoc: "",
   pickupTime: "",
-  totalPrice: "",
   transferType: "",
 };
 
-export default function Airport() {
-  const [propertyLocations, setPropertyLocations] = useState<LocationDoc[]>([]);
-  const [airportLocations, setAirportLocations] = useState<LocationDoc[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) => void }) {
+  const { groupA: propertyLocations, groupB: airportLocations, isLoading: locationsLoading } = useLocations("Hotel", "Airport");
+  const { guestInfo, updateGuestInfo, setLastHotel } = useBookingCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [formData, setFormData] = useState<AirportFormData>(initialFormData);
+  const [formData, setFormData] = useState<AirportFormState>(initialFormData);
+  const [contact, setContact] = useState({ fName: guestInfo.fName, lName: guestInfo.lName, email: guestInfo.email, phone: guestInfo.phone });
 
-  const fetchLocations = async () => {
-    try {
-      setIsLoading(true);
-      const querySnapshot = await getDocs(
-        query(collection(db, "locations"), where("locationType", "in", ["Hotel", "Airport"]))
-      );
-      const propertyData: LocationDoc[] = [];
-      const airportData: LocationDoc[] = [];
-      querySnapshot.docs.forEach((doc) => {
-        const location = { id: doc.id, ...doc.data() } as LocationDoc;
-        if (location.locationType === "Hotel") {
-          propertyData.push(location);
-        } else if (location.locationType === "Airport") {
-          airportData.push(location);
-        }
-      });
-      setPropertyLocations(propertyData);
-      setAirportLocations(airportData);
-    } catch (error) {
-      console.error("Error fetching locations: ", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateFormData = (newData: Partial<AirportFormData>) => {
+  const updateFormData = (newData: Partial<AirportFormState>) => {
     setFormData((prevData) => ({ ...prevData, ...newData }));
   };
-
-  const router = useNavigate();
 
   const airportHandleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (formData.bookingType === "AS") {
@@ -103,42 +68,31 @@ export default function Airport() {
     e.preventDefault();
     setMessage("");
     try {
-      setIsLoading(true);
-      const routesCollectionRef = collection(db, "routes");
-      const query1 = query(
-        routesCollectionRef,
-        where("routeFrom", "==", formData.pickupLoc),
-        where("routeTo", "==", formData.dropoffLoc)
-      );
-      const query2 = query(
-        routesCollectionRef,
-        where("routeFrom", "==", formData.dropoffLoc),
-        where("routeTo", "==", formData.pickupLoc)
-      );
-      const [snapshot1, snapshot2] = await Promise.all([getDocs(query1), getDocs(query2)]);
-      const existingRoute = snapshot1.docs[0] || snapshot2.docs[0];
-      if (!existingRoute) {
+      setIsSubmitting(true);
+      const fare = await resolveRouteFare(formData.pickupLoc, formData.dropoffLoc, formData.adults);
+      if (!fare) {
         setMessage("The chosen route is unavailable. Please select a different route.");
         return;
       }
-      const routeData = existingRoute.data();
-      const perPerson = parseInt(routeData?.routeFare);
-      const totalFare = perPerson * parseInt(formData.adults);
-      const finaldata = { ...formData, perPersonPrice: perPerson, totalPrice: totalFare };
-      router("/booking/details", { state: finaldata });
+      updateGuestInfo(contact);
+      const hotel = formData.bookingType === "AS" ? formData.pickupLoc : formData.dropoffLoc;
+      if (hotel) setLastHotel(hotel);
+      const leg: AirportLeg = {
+        id: crypto.randomUUID(),
+        legType: "airport",
+        ...formData,
+        ...fare,
+      };
+      onComplete(leg);
     } catch (error) {
       console.error("Error checking route or submitting booking:", error);
       alert("Failed to submit booking. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  if (isLoading) return <LoaderAnimation />;
+  if (locationsLoading || isSubmitting) return <LoaderAnimation />;
 
   return (
     <div className="space-y-7">
@@ -220,8 +174,8 @@ export default function Airport() {
             id="first_name"
             className={inputClass}
             placeholder="First Name"
-            value={formData.fName}
-            onChange={(e) => updateFormData({ fName: e.target.value })}
+            value={contact.fName}
+            onChange={(e) => setContact({ ...contact, fName: e.target.value })}
             required
           />
         </div>
@@ -232,8 +186,8 @@ export default function Airport() {
             id="last_name"
             className={inputClass}
             placeholder="Last Name"
-            value={formData.lName}
-            onChange={(e) => updateFormData({ lName: e.target.value })}
+            value={contact.lName}
+            onChange={(e) => setContact({ ...contact, lName: e.target.value })}
             required
           />
         </div>
@@ -244,8 +198,8 @@ export default function Airport() {
             id="email"
             className={inputClass}
             placeholder="john.doe@example.com"
-            value={formData.email}
-            onChange={(e) => updateFormData({ email: e.target.value })}
+            value={contact.email}
+            onChange={(e) => setContact({ ...contact, email: e.target.value })}
             required
           />
         </div>
@@ -256,8 +210,8 @@ export default function Airport() {
             id="phone"
             className={inputClass}
             placeholder="Phone #"
-            value={formData.phone}
-            onChange={(e) => updateFormData({ phone: e.target.value })}
+            value={contact.phone}
+            onChange={(e) => setContact({ ...contact, phone: e.target.value })}
             required
           />
         </div>
@@ -270,26 +224,17 @@ export default function Airport() {
             placeholder="Comments"
             value={formData.comments}
             onChange={(e) => updateFormData({ comments: e.target.value })}
-            required
           />
         </div>
 
         <div className={sectionHeaderClass}>
           <p className="text-lg">No. Passengers</p>
         </div>
-        <div>
-          <label htmlFor="adults" className={labelClass}>Passengers</label>
-          <input
-            type="number"
-            id="adults"
-            min={1}
-            className={inputClass}
-            placeholder="1"
-            value={formData.adults}
-            onChange={(e) => updateFormData({ adults: e.target.value })}
-            required
-          />
-        </div>
+        <CommonPassengers
+          value={formData.adults}
+          onChange={(v) => updateFormData({ adults: v })}
+          max={14}
+        />
 
         <div className={sectionHeaderClass}>
           <p className="text-lg">Flight Details</p>
