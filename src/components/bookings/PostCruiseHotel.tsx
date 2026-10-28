@@ -51,6 +51,7 @@ export default function PostCruiseHotel({ onComplete }: { onComplete: (leg: Post
         legType: "post-cruise-hotel",
         ...formData,
         ...fare,
+        serviceFee: 0,
       };
       onComplete(leg);
     } catch (error) {

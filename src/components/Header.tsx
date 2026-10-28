@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaPhoneAlt, FaBars, FaTimes } from "react-icons/fa";
+import { FaPhoneAlt, FaBars, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { NAV_LINKS, PHONE_DISPLAY, PHONE_HREF } from "../lib/constants";
+import { useBookingCart } from "../contexts/BookingCartContext";
 import logo from "../assets/logo.png"
 export default function Header() {
+  const { legs } = useBookingCart();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -51,6 +53,14 @@ export default function Header() {
             <FaPhoneAlt size={11} />
             {PHONE_DISPLAY}
           </a>
+          <Link to="/booking/cart" className={`relative transition-colors ${scrolled ? "text-white/80 hover:text-accent" : "text-ink hover:text-primary"}`}>
+            <FaShoppingCart size={18} />
+            {legs.length > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-black">
+                {legs.length}
+              </span>
+            )}
+          </Link>
           <Link
             to="/booking"
             className={`inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-bold shadow-sm transition-all hover:-translate-y-0.5 ${
@@ -63,14 +73,24 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setMobileOpen((v) => !v)}
-          className={`lg:hidden flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${scrolled ? "text-white" : "text-ink"}`}
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
-        </button>
+        {/* Mobile cart + toggle */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <Link to="/booking/cart" className={`relative transition-colors ${scrolled ? "text-white/80 hover:text-accent" : "text-ink hover:text-primary"}`}>
+            <FaShoppingCart size={18} />
+            {legs.length > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-black">
+                {legs.length}
+              </span>
+            )}
+          </Link>
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${scrolled ? "text-white" : "text-ink"}`}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

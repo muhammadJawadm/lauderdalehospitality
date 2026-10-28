@@ -106,7 +106,7 @@ export default function BookingOptions() {
   }
 
   if (stage === "airport-form") {
-    return <div className="w-full max-w-202.5"><Airport onComplete={handleAirportComplete} /></div>;
+    return <div className="w-full max-w-202.5"><Airport onComplete={handleAirportComplete} onInquiryRedirect={() => setStage("inquiries")} /></div>;
   }
   if (stage === "cruise-form") {
     return <div className="w-full max-w-202.5"><CruisePort onComplete={handleCruiseComplete} prefillHotel={lastHotel} /></div>;

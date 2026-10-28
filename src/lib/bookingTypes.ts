@@ -17,6 +17,7 @@ export interface BookingState {
   transferType: string;
   perPersonPrice: number;
   totalPrice: number;
+  serviceFee?: number;
   // Airport-specific
   pickupDate?: string;
   pickupTime?: string;

@@ -53,6 +53,7 @@ export default function PostCruiseAirport({ onComplete }: { onComplete: (leg: Po
         legType: "post-cruise-airport",
         ...formData,
         ...fare,
+        serviceFee: 0,
       };
       onComplete(leg);
     } catch (error) {

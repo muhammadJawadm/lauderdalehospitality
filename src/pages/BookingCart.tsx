@@ -1,57 +1,21 @@
 import { useNavigate } from "react-router-dom";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaPlus, FaShoppingCart } from "react-icons/fa";
 import BookingHeader from "../components/bookings/BookingHeader";
 import { useBookingCart } from "../contexts/BookingCartContext";
 import { LEG_TYPE_LABELS, legDateTime } from "../lib/cartTypes";
 import { inputClass, labelClass, primaryButtonClass } from "../lib/bookingTypes";
-import type { BookingState } from "../lib/bookingTypes";
 
 export default function BookingCart() {
   const { legs, guestInfo, updateGuestInfo, removeLeg, totalPrice } = useBookingCart();
   const navigate = useNavigate();
 
-  const handleCheckout = () => {
-    if (legs.length !== 1) return;
-    const leg = legs[0];
-    // Reuses the existing single-booking Details -> Summary -> Checkout pipeline unchanged.
-    const booking: BookingState = {
-      bookingType: leg.legType === "airport" || leg.legType === "cruise" ? leg.bookingType : "AP",
-      adults: leg.adults,
-      fName: guestInfo.fName,
-      lName: guestInfo.lName,
-      email: guestInfo.email,
-      phone: guestInfo.phone,
-      comments: leg.comments,
-      pickupLoc: leg.pickupLoc,
-      dropoffLoc: leg.dropoffLoc,
-      transferType: "transferType" in leg ? leg.transferType : "One Way",
-      perPersonPrice: leg.perPersonPrice,
-      totalPrice: leg.totalPrice,
-      ...(leg.legType === "airport" && {
-        pickupDate: leg.pickupDate,
-        pickupTime: leg.pickupTime,
-        airline: leg.airline,
-        flightNum: leg.flightNum,
-        arrival: leg.arrival,
-      }),
-      ...(leg.legType === "cruise" && {
-        cruiseDate: leg.cruiseDate,
-        cruiseLine: leg.cruiseLine,
-        cruiseShip: leg.cruiseShip,
-        departureTime: leg.departureTime,
-        returnTrip: leg.returnTrip,
-      }),
-      ...(leg.legType === "post-cruise-airport" && { cruiseShip: leg.cruiseShip, airline: leg.airline }),
-      ...(leg.legType === "post-cruise-hotel" && { cruiseShip: leg.cruiseShip }),
-      ...(leg.legType === "departure" && { pickupDate: leg.departureDate, pickupTime: leg.pickupTime, airline: leg.airline }),
-    };
-    navigate("/booking/details", { state: booking });
-  };
+  const totalServiceFees = legs.reduce((sum, leg) => sum + (leg.serviceFee || 0), 0);
+  const fareTotal = totalPrice - totalServiceFees;
 
   return (
     <div className="min-h-screen bg-bg-light">
       <BookingHeader />
-      <div className="mx-auto max-w-5xl space-y-10 px-6 py-14">
+      <div className="mx-auto max-w-5xl space-y-8 px-6 py-14">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-primary">Review</span>
           <h1 className="mt-2 font-display text-3xl font-extrabold text-ink">Your Transfers</h1>
@@ -80,71 +44,106 @@ export default function BookingCart() {
         </div>
 
         {legs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <p className="text-body">You haven&apos;t added any transfers yet.</p>
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
+            <FaShoppingCart className="mx-auto text-gray-300" size={40} />
+            <p className="mt-4 font-display text-lg font-semibold text-ink">No transfers yet</p>
+            <p className="mt-1 text-sm text-body">Add a transfer to get started with your booking.</p>
+            <button
+              type="button"
+              onClick={() => navigate("/booking")}
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+            >
+              <FaPlus size={12} /> Book a Transfer
+            </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {legs.map((leg) => {
-              const { date, time } = legDateTime(leg);
-              return (
-                <div key={leg.id} className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-display text-sm font-bold uppercase tracking-wide text-primary">{LEG_TYPE_LABELS[leg.legType]}</p>
-                    <p className="mt-1 text-sm text-ink">
-                      {leg.pickupLoc} &rarr; {leg.dropoffLoc}
-                    </p>
-                    <p className="mt-1 text-xs text-body">
-                      {date && <>{date} &middot; </>}
-                      {time && <>{time} &middot; </>}
-                      {leg.adults} passenger{leg.adults !== "1" ? "s" : ""}
-                    </p>
+          <>
+            <div className="space-y-4">
+              {legs.map((leg, i) => {
+                const { date, time } = legDateTime(leg);
+                const pax = parseInt(leg.adults, 10);
+                const fareOnly = leg.perPersonPrice * pax;
+                return (
+                  <div key={leg.id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div className="flex items-center justify-between bg-gray-50 px-6 py-3">
+                      <p className="font-display text-sm font-bold uppercase tracking-wide text-primary">
+                        {i + 1}. {LEG_TYPE_LABELS[leg.legType]}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => removeLeg(leg.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                        aria-label="Remove transfer"
+                      >
+                        <FaTrash size={13} />
+                      </button>
+                    </div>
+                    <div className="space-y-3 px-6 py-5">
+                      <p className="text-sm font-semibold text-ink">
+                        {leg.pickupLoc} &rarr; {leg.dropoffLoc}
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-body">
+                        {date && <span>{date}</span>}
+                        {time && <span>{time}</span>}
+                        <span>{leg.adults} passenger{pax !== 1 ? "s" : ""}</span>
+                        {leg.legType === "airport" && leg.airline && (
+                          <span>{leg.airline} &middot; Flight {leg.flightNum}</span>
+                        )}
+                        {leg.legType === "cruise" && leg.cruiseLine && (
+                          <span>{leg.cruiseLine} &middot; {leg.cruiseShip}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-gray-100 pt-3 text-sm">
+                        <span className="text-body">
+                          ${leg.perPersonPrice}/person &times; {leg.adults} = ${fareOnly}
+                        </span>
+                        {leg.serviceFee > 0 && (
+                          <span className="text-body">+ ${leg.serviceFee} service fee</span>
+                        )}
+                        <span className="ml-auto font-display text-lg font-bold text-ink">${leg.totalPrice}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <p className="font-display text-lg font-bold text-ink">${leg.totalPrice}</p>
-                    <button
-                      type="button"
-                      onClick={() => removeLeg(leg.id)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50"
-                      aria-label="Remove transfer"
-                    >
-                      <FaTrash size={14} />
-                    </button>
-                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate("/booking")}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-gray-200 px-6 py-3 text-sm font-bold text-ink transition-colors hover:border-primary hover:text-primary"
+            >
+              <FaPlus size={12} /> Add Another Transfer
+            </button>
+
+            <div className="rounded-2xl bg-primary px-7 py-6 text-white">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-white/70">
+                  <span>Fare Total</span>
+                  <span>${fareTotal}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                {totalServiceFees > 0 && (
+                  <div className="flex justify-between text-sm text-white/70">
+                    <span>Service Fees</span>
+                    <span>${totalServiceFees}</span>
+                  </div>
+                )}
+                <div className="flex items-end justify-between border-t border-white/20 pt-3">
+                  <span className="text-xs font-bold uppercase tracking-wide text-white/70">Grand Total</span>
+                  <span className="font-display text-2xl font-extrabold">${totalPrice}</span>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl bg-primary px-7 py-6 text-white sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-white/70">Reservation Total</p>
-            <p className="font-display text-2xl font-extrabold">${totalPrice}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/booking")}
-            className="rounded-full border-2 border-white/40 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
-          >
-            + Add Another Transfer
-          </button>
-        </div>
-
-        {legs.length > 1 ? (
-          <p className="rounded-xl bg-accent/15 px-5 py-4 text-sm text-ink">
-            Combined checkout for multiple transfers is coming soon. For now, please remove transfers down to one at
-            a time to check out, or check back shortly.
-          </p>
-        ) : (
-          <button
-            type="button"
-            onClick={handleCheckout}
-            disabled={legs.length !== 1}
-            className={primaryButtonClass}
-          >
-            Proceed to Checkout
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate("/booking/checkout")}
+              disabled={legs.length === 0}
+              className={primaryButtonClass}
+            >
+              Proceed to Checkout ({legs.length} transfer{legs.length !== 1 ? "s" : ""})
+            </button>
+          </>
         )}
       </div>
     </div>

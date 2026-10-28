@@ -105,8 +105,14 @@ export default function BookingDetails() {
                 <div className="flex flex-col items-center justify-around gap-5 text-center sm:flex-row">
                   <div className="space-y-3 sm:space-y-7">
                     <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Base Fee</h5>
-                    <p className="text-body">$ {booking.perPersonPrice}</p>
+                    <p className="text-body">$ {booking.perPersonPrice} /person</p>
                   </div>
+                  {(booking.serviceFee ?? 0) > 0 && (
+                    <div className="space-y-3 sm:space-y-7">
+                      <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Service Fee</h5>
+                      <p className="text-body">$ {booking.serviceFee}</p>
+                    </div>
+                  )}
                   <div className="space-y-3 sm:space-y-7">
                     <h5 className="font-display text-lg font-medium text-ink sm:text-2xl">Total Cost</h5>
                     <p className="text-body">$ {booking.totalPrice}</p>

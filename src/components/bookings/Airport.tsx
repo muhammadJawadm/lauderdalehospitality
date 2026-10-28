@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
 import { inputClass, labelClass, sectionHeaderClass, primaryButtonClass } from "../../lib/bookingTypes";
 import { useLocations, resolveRouteFare } from "../../lib/useLocations";
 import { useBookingCart } from "../../contexts/BookingCartContext";
+import { usePricingSettings, calculateServiceFee, isInquiryOnlyPickup } from "../../lib/pricingUtils";
 import type { AirportLeg } from "../../lib/cartTypes";
 import CommonAirports from "./CommonAirports";
 import CommonTimeSlots from "./CommonTimeSlots";
@@ -36,8 +38,14 @@ const initialFormData: AirportFormState = {
   transferType: "",
 };
 
-export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) => void }) {
+interface AirportProps {
+  onComplete: (leg: AirportLeg) => void;
+  onInquiryRedirect?: () => void;
+}
+
+export default function Airport({ onComplete, onInquiryRedirect }: AirportProps) {
   const { groupA: propertyLocations, groupB: airportLocations, isLoading: locationsLoading } = useLocations("Hotel", "Airport");
+  const { settings, isLoading: pricingLoading } = usePricingSettings();
   const { guestInfo, updateGuestInfo, setLastHotel } = useBookingCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -47,6 +55,9 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
   const updateFormData = (newData: Partial<AirportFormState>) => {
     setFormData((prevData) => ({ ...prevData, ...newData }));
   };
+
+  const selectedAirport = formData.bookingType === "AP" ? formData.pickupLoc : formData.dropoffLoc;
+  const inquiryBlocked = formData.bookingType === "AP" && !!selectedAirport && isInquiryOnlyPickup(selectedAirport, settings);
 
   const airportHandleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (formData.bookingType === "AS") {
@@ -66,6 +77,7 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (inquiryBlocked) return;
     setMessage("");
     try {
       setIsSubmitting(true);
@@ -74,6 +86,8 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
         setMessage("The chosen route is unavailable. Please select a different route.");
         return;
       }
+      const passengers = parseInt(formData.adults, 10);
+      const fee = calculateServiceFee(formData.pickupLoc, passengers, settings);
       updateGuestInfo(contact);
       const hotel = formData.bookingType === "AS" ? formData.pickupLoc : formData.dropoffLoc;
       if (hotel) setLastHotel(hotel);
@@ -81,7 +95,9 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
         id: crypto.randomUUID(),
         legType: "airport",
         ...formData,
-        ...fare,
+        perPersonPrice: fare.perPersonPrice,
+        totalPrice: fare.totalPrice + fee,
+        serviceFee: fee,
       };
       onComplete(leg);
     } catch (error) {
@@ -92,7 +108,7 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
     }
   };
 
-  if (locationsLoading || isSubmitting) return <LoaderAnimation />;
+  if (locationsLoading || pricingLoading || isSubmitting) return <LoaderAnimation />;
 
   return (
     <div className="space-y-7">
@@ -283,6 +299,29 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
           </select>
         </div>
 
+        {inquiryBlocked && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <FaExclamationTriangle className="mt-0.5 shrink-0 text-amber-600" size={18} />
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-amber-800">
+                Pickups from {selectedAirport} require staff coordination.
+              </p>
+              <p className="text-sm text-amber-700">
+                Please submit an inquiry and our team will arrange your transfer.
+              </p>
+              {onInquiryRedirect && (
+                <button
+                  type="button"
+                  onClick={onInquiryRedirect}
+                  className="mt-1 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+                >
+                  Submit an Inquiry
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className={sectionHeaderClass}>
           <p className="text-lg">Location</p>
         </div>
@@ -308,7 +347,9 @@ export default function Airport({ onComplete }: { onComplete: (leg: AirportLeg) 
           <p className="text-sm font-medium text-red-600 underline underline-offset-2">{message}</p>
         )}
 
-        <button type="submit" className={primaryButtonClass}>Confirm Reservation</button>
+        <button type="submit" className={primaryButtonClass} disabled={inquiryBlocked}>
+          Confirm Reservation
+        </button>
       </form>
     </div>
   );

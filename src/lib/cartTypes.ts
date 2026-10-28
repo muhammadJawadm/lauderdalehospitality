@@ -15,6 +15,7 @@ interface BaseLeg {
   comments: string;
   perPersonPrice: number;
   totalPrice: number;
+  serviceFee: number;
 }
 
 export interface AirportLeg extends BaseLeg {

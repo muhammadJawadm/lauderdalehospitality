@@ -60,7 +60,15 @@ export default function BookingSummary() {
               <h5 className="font-display text-xl font-medium sm:text-2xl">Ride Details</h5>
             </div>
             <div className="space-y-4 rounded-xl bg-white px-5 py-6 shadow-lg sm:px-10">
-              <SummaryRow label="Cost" value={booking.totalPrice} />
+              <SummaryRow label="Fare" value={`$${booking.perPersonPrice} × ${booking.adults} passengers`} />
+              {(booking.serviceFee ?? 0) > 0 && (
+                <>
+                  <div className="border-b border-gray-100" />
+                  <SummaryRow label="Service Fee" value={`$${booking.serviceFee}`} />
+                </>
+              )}
+              <div className="border-b border-gray-100" />
+              <SummaryRow label="Total" value={`$${booking.totalPrice}`} />
               <div className="border-b border-gray-100" />
               <SummaryRow label="Transfer Type" value={booking.transferType} />
               <div className="border-b border-gray-100" />

@@ -87,6 +87,7 @@ export default function CruisePort({ onComplete, prefillHotel }: CruisePortProps
         ...formData,
         transferType: formData.returnTrip ? "Two Way" : "One Way",
         ...fare,
+        serviceFee: 0,
       };
       onComplete(leg);
     } catch (error) {

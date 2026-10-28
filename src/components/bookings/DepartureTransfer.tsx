@@ -55,6 +55,7 @@ export default function DepartureTransfer({ onComplete, prefillHotel }: Departur
         legType: "departure",
         ...formData,
         ...fare,
+        serviceFee: 0,
       };
       onComplete(leg);
     } catch (error) {
