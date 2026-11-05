@@ -9,14 +9,14 @@ import {
   type User,
   type UserCredential,
 } from "firebase/auth";
-import { doc, getDoc, type DocumentData } from "firebase/firestore";
+import { doc, getDoc, setDoc, type DocumentData } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import LoaderAnimation from "../components/LoaderAnimation";
 
 interface AuthContextValue {
   currentUser: User | null | undefined;
   login: (email: string, password: string) => Promise<UserCredential>;
-  signup: (email: string, password: string) => Promise<UserCredential>;
+  signup: (email: string, password: string, profile?: { fName: string; lName: string; phone: string }) => Promise<UserCredential>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
@@ -40,8 +40,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<DocumentData | null>(null);
 
-  const signup = async (email: string, password: string) => {
-    return await createUserWithEmailAndPassword(auth, email, password);
+  const signup = async (email: string, password: string, profile?: { fName: string; lName: string; phone: string }) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (profile) {
+      await setDoc(doc(db, "users", cred.user.uid), {
+        fName: profile.fName,
+        lName: profile.lName,
+        email,
+        phone: profile.phone,
+      });
+    }
+    return cred;
   };
 
   async function login(email: string, password: string) {

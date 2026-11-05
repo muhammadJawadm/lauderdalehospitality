@@ -12,7 +12,6 @@ interface BaseLeg {
   pickupLoc: string;
   dropoffLoc: string;
   adults: string;
-  comments: string;
   perPersonPrice: number;
   totalPrice: number;
   serviceFee: number;
@@ -23,7 +22,6 @@ export interface AirportLeg extends BaseLeg {
   bookingType: "AS" | "AP";
   pickupDate: string;
   pickupTime: string;
-  transferType: string;
   airline: string;
   flightNum: string;
   arrival: string;
@@ -36,18 +34,18 @@ export interface CruiseLeg extends BaseLeg {
   cruiseLine: string;
   cruiseShip: string;
   departureTime: string;
-  returnTrip: boolean;
-  transferType: string;
 }
 
 export interface PostCruiseAirportLeg extends BaseLeg {
   legType: "post-cruise-airport";
+  cruiseLine: string;
   cruiseShip: string;
   airline: string;
 }
 
 export interface PostCruiseHotelLeg extends BaseLeg {
   legType: "post-cruise-hotel";
+  cruiseLine: string;
   cruiseShip: string;
 }
 
@@ -60,19 +58,33 @@ export interface DepartureLeg extends BaseLeg {
 
 export type CartLeg = AirportLeg | CruiseLeg | PostCruiseAirportLeg | PostCruiseHotelLeg | DepartureLeg;
 
+export function getLegLabel(leg: CartLeg): string {
+  switch (leg.legType) {
+    case "airport":
+      return leg.bookingType === "AP" ? "Airport to Hotel Arrival" : "Hotel to Airport Departure";
+    case "cruise":
+      return leg.bookingType === "CS" ? "Hotel to Cruise Port" : "Cruise Port to Hotel";
+    case "post-cruise-airport":
+      return "Cruise Port to Airport";
+    case "post-cruise-hotel":
+      return "Cruise Port to Hotel";
+    case "departure":
+      return "Hotel to Airport Departure";
+  }
+}
+
 export const LEG_TYPE_LABELS: Record<CartLeg["legType"], string> = {
-  airport: "Airport Transfer",
-  cruise: "Hotel ↔ Cruise Port Transfer",
-  "post-cruise-airport": "Cruise Port → Airport",
-  "post-cruise-hotel": "Cruise Port → Hotel",
-  departure: "Hotel → Airport Departure",
+  airport: "Airport to Hotel Arrival",
+  cruise: "Hotel to Cruise Port",
+  "post-cruise-airport": "Cruise Port to Airport",
+  "post-cruise-hotel": "Cruise Port to Hotel",
+  departure: "Hotel to Airport Departure",
 };
 
-/** The date/time shown on a cart-leg summary row, regardless of which fields that leg type uses. */
 export function legDateTime(leg: CartLeg): { date: string; time: string } {
   switch (leg.legType) {
     case "airport":
-      return { date: leg.pickupDate, time: leg.pickupTime };
+      return { date: leg.pickupDate, time: leg.pickupTime || leg.arrival };
     case "cruise":
       return { date: leg.cruiseDate, time: leg.departureTime };
     case "departure":

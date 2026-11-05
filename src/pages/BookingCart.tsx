@@ -1,16 +1,120 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaTrash, FaPlus, FaShoppingCart } from "react-icons/fa";
+import { FaTrash, FaPlus, FaShoppingCart, FaPen } from "react-icons/fa";
 import BookingHeader from "../components/bookings/BookingHeader";
 import { useBookingCart } from "../contexts/BookingCartContext";
-import { LEG_TYPE_LABELS, legDateTime } from "../lib/cartTypes";
+import { getLegLabel, legDateTime, type CartLeg } from "../lib/cartTypes";
 import { inputClass, labelClass, primaryButtonClass } from "../lib/bookingTypes";
+import { useLocations, resolveRouteFare } from "../lib/useLocations";
+import { usePricingSettings, calculateServiceFee } from "../lib/pricingUtils";
+import CommonPassengers from "../components/bookings/CommonPassengers";
+import LoaderAnimation from "../components/LoaderAnimation";
+
+function EditLegModal({ leg, onSave, onCancel }: { leg: CartLeg; onSave: (updated: CartLeg) => void; onCancel: () => void }) {
+  const { groupA: hotels, groupB: airports, isLoading: locLoading1 } = useLocations("Hotel", "Airport");
+  const { groupB: ports, isLoading: locLoading2 } = useLocations("Hotel", "Port");
+  const { settings, isLoading: pricingLoading } = usePricingSettings();
+  const [draft, setDraft] = useState({ ...leg });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const update = (partial: Partial<typeof draft>) => setDraft((prev) => ({ ...prev, ...partial }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const fare = await resolveRouteFare(draft.pickupLoc, draft.dropoffLoc, draft.adults);
+      if (!fare) { setError("Route unavailable."); return; }
+      const passengers = parseInt(draft.adults, 10);
+      const feeLoc = draft.legType === "airport" && (draft as any).bookingType === "AS" ? draft.dropoffLoc : draft.pickupLoc;
+      const fee = calculateServiceFee(feeLoc, passengers, settings);
+      onSave({ ...draft, perPersonPrice: fare.perPersonPrice, totalPrice: fare.totalPrice + fee, serviceFee: fee } as CartLeg);
+    } catch { setError("Failed to update. Try again."); } finally { setSaving(false); }
+  };
+
+  if (locLoading1 || locLoading2 || pricingLoading) return <LoaderAnimation />;
+
+  const allLocations = [...hotels, ...airports, ...ports];
+  const pickupOptions = allLocations.filter((l) => l.locationName !== draft.dropoffLoc);
+  const dropoffOptions = allLocations.filter((l) => l.locationName !== draft.pickupLoc);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-lg space-y-5 rounded-2xl bg-white p-7 shadow-xl">
+        <h3 className="font-display text-lg font-bold text-ink">Edit Transfer</h3>
+        <div>
+          <label className={labelClass}>Pickup Location</label>
+          <select className={inputClass} value={draft.pickupLoc} onChange={(e) => update({ pickupLoc: e.target.value })}>
+            {pickupOptions.map((l) => <option key={l.id} value={l.locationName}>{l.locationName}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Drop off Location</label>
+          <select className={inputClass} value={draft.dropoffLoc} onChange={(e) => update({ dropoffLoc: e.target.value })}>
+            {dropoffOptions.map((l) => <option key={l.id} value={l.locationName}>{l.locationName}</option>)}
+          </select>
+        </div>
+        <CommonPassengers value={draft.adults} onChange={(v) => update({ adults: v })} />
+
+        {leg.legType === "airport" && (
+          <>
+            <div>
+              <label className={labelClass}>Date</label>
+              <input type="date" className={inputClass} value={(draft as any).pickupDate} onChange={(e) => update({ pickupDate: e.target.value } as any)} />
+            </div>
+            {(draft as any).bookingType === "AP" ? (
+              <div>
+                <label className={labelClass}>Arrival Time</label>
+                <input type="text" className={inputClass} value={(draft as any).arrival} onChange={(e) => update({ arrival: e.target.value } as any)} placeholder="e.g. 10:53 AM" />
+              </div>
+            ) : (
+              <div>
+                <label className={labelClass}>Pickup Time</label>
+                <input type="text" className={inputClass} value={(draft as any).pickupTime} onChange={(e) => update({ pickupTime: e.target.value } as any)} />
+              </div>
+            )}
+          </>
+        )}
+
+        {leg.legType === "cruise" && (
+          <div>
+            <label className={labelClass}>Date of Cruise</label>
+            <input type="date" className={inputClass} value={(draft as any).cruiseDate} onChange={(e) => update({ cruiseDate: e.target.value } as any)} />
+          </div>
+        )}
+
+        {leg.legType === "departure" && (
+          <div>
+            <label className={labelClass}>Date of Departure</label>
+            <input type="date" className={inputClass} value={(draft as any).departureDate} onChange={(e) => update({ departureDate: e.target.value } as any)} />
+          </div>
+        )}
+
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+
+        <div className="flex gap-3 pt-2">
+          <button type="button" onClick={onCancel} className="flex-1 rounded-lg border border-gray-200 py-3 text-sm font-semibold text-ink transition-colors hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={saving} className="flex-1 rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BookingCart() {
-  const { legs, guestInfo, updateGuestInfo, removeLeg, totalPrice } = useBookingCart();
+  const { legs, guestInfo, updateGuestInfo, removeLeg, updateLeg, totalPrice } = useBookingCart();
   const navigate = useNavigate();
+  const [editingLegId, setEditingLegId] = useState<string | null>(null);
 
   const totalServiceFees = legs.reduce((sum, leg) => sum + (leg.serviceFee || 0), 0);
   const fareTotal = totalPrice - totalServiceFees;
+
+  const editingLeg = editingLegId ? legs.find((l) => l.id === editingLegId) : null;
 
   return (
     <div className="min-h-screen bg-bg-light">
@@ -67,16 +171,26 @@ export default function BookingCart() {
                   <div key={leg.id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="flex items-center justify-between bg-gray-50 px-6 py-3">
                       <p className="font-display text-sm font-bold uppercase tracking-wide text-primary">
-                        {i + 1}. {LEG_TYPE_LABELS[leg.legType]}
+                        {i + 1}. {getLegLabel(leg)}
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => removeLeg(leg.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                        aria-label="Remove transfer"
-                      >
-                        <FaTrash size={13} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingLegId(leg.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-primary transition-colors hover:bg-primary/10"
+                          aria-label="Edit transfer"
+                        >
+                          <FaPen size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLeg(leg.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          aria-label="Remove transfer"
+                        >
+                          <FaTrash size={13} />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-3 px-6 py-5">
                       <p className="text-sm font-semibold text-ink">
@@ -146,6 +260,14 @@ export default function BookingCart() {
           </>
         )}
       </div>
+
+      {editingLeg && (
+        <EditLegModal
+          leg={editingLeg}
+          onSave={(updated) => { updateLeg(editingLeg.id, updated); setEditingLegId(null); }}
+          onCancel={() => setEditingLegId(null)}
+        />
+      )}
     </div>
   );
 }

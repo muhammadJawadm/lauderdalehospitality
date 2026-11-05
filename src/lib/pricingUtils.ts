@@ -32,8 +32,17 @@ export function usePricingSettings() {
       .then((snap) => {
         if (!cancelled && snap.exists()) {
           const data = snap.data();
+          const sf = data.serviceFees ?? {};
           setSettings({
-            serviceFees: { ...DEFAULTS.serviceFees, ...data.serviceFees },
+            serviceFees: {
+              smallGroupFee: sf.smallGroupFee ?? DEFAULTS.serviceFees.smallGroupFee,
+              largeGroupFee: sf.largeGroupFee ?? DEFAULTS.serviceFees.largeGroupFee,
+              largeGroupThreshold: sf.largeGroupThreshold ?? DEFAULTS.serviceFees.largeGroupThreshold,
+              triggerLocations:
+                Array.isArray(sf.triggerLocations) && sf.triggerLocations.length > 0
+                  ? sf.triggerLocations
+                  : DEFAULTS.serviceFees.triggerLocations,
+            },
             inquiryOnlyPickups: data.inquiryOnlyPickups ?? DEFAULTS.inquiryOnlyPickups,
           });
         }

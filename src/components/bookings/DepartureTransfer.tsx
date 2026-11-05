@@ -9,7 +9,6 @@ import CommonPassengers from "./CommonPassengers";
 import LoaderAnimation from "../LoaderAnimation";
 
 interface FormState {
-  comments: string;
   adults: string;
   departureDate: string;
   pickupTime: string;
@@ -20,18 +19,21 @@ interface FormState {
 
 interface DepartureTransferProps {
   onComplete: (leg: DepartureLeg) => void;
-  /** Prefills the hotel pickup location, e.g. the hotel just dropped off at on an earlier Post-Cruise leg. */
   prefillHotel?: string;
 }
 
 export default function DepartureTransfer({ onComplete, prefillHotel }: DepartureTransferProps) {
   const { groupA: hotelLocations, groupB: airportLocations, isLoading: locationsLoading } = useLocations("Hotel", "Airport");
-  const { guestInfo, updateGuestInfo } = useBookingCart();
+  const { guestInfo, updateGuestInfo, lastPassengers } = useBookingCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [formData, setFormData] = useState<FormState>({
-    comments: "", adults: "2", departureDate: "", pickupTime: "", airline: "",
-    pickupLoc: prefillHotel ?? "", dropoffLoc: "",
+    adults: lastPassengers,
+    departureDate: "",
+    pickupTime: "",
+    airline: "",
+    pickupLoc: prefillHotel ?? "",
+    dropoffLoc: "",
   });
   const [contact, setContact] = useState({ fName: guestInfo.fName, lName: guestInfo.lName, email: guestInfo.email, phone: guestInfo.phone });
 
@@ -74,26 +76,6 @@ export default function DepartureTransfer({ onComplete, prefillHotel }: Departur
         <p className="text-lg">Hotel &rarr; Airport Departure</p>
       </div>
       <form className="space-y-7" onSubmit={handleSubmit}>
-        <div className={sectionHeaderClass}>
-          <p className="text-lg">Personal Information</p>
-        </div>
-        <div>
-          <label htmlFor="first_name" className={labelClass}>First Name</label>
-          <input type="text" id="first_name" className={inputClass} value={contact.fName} onChange={(e) => setContact({ ...contact, fName: e.target.value })} required />
-        </div>
-        <div>
-          <label htmlFor="last_name" className={labelClass}>Last Name</label>
-          <input type="text" id="last_name" className={inputClass} value={contact.lName} onChange={(e) => setContact({ ...contact, lName: e.target.value })} required />
-        </div>
-        <div>
-          <label htmlFor="email" className={labelClass}>Email</label>
-          <input type="email" id="email" className={inputClass} value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} required />
-        </div>
-        <div>
-          <label htmlFor="phone" className={labelClass}>Phone #</label>
-          <input type="tel" id="phone" className={inputClass} value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} required />
-        </div>
-
         <div className={sectionHeaderClass}>
           <p className="text-lg">Departure Details</p>
         </div>
@@ -142,9 +124,25 @@ export default function DepartureTransfer({ onComplete, prefillHotel }: Departur
             ))}
           </select>
         </div>
+
+        <div className={sectionHeaderClass}>
+          <p className="text-lg">Personal Information</p>
+        </div>
         <div>
-          <label htmlFor="comments" className={labelClass}>Comments</label>
-          <textarea id="comments" rows={4} className={inputClass} value={formData.comments} onChange={(e) => updateFormData({ comments: e.target.value })} />
+          <label htmlFor="first_name" className={labelClass}>First Name</label>
+          <input type="text" id="first_name" className={inputClass} value={contact.fName} onChange={(e) => setContact({ ...contact, fName: e.target.value })} required />
+        </div>
+        <div>
+          <label htmlFor="last_name" className={labelClass}>Last Name</label>
+          <input type="text" id="last_name" className={inputClass} value={contact.lName} onChange={(e) => setContact({ ...contact, lName: e.target.value })} required />
+        </div>
+        <div>
+          <label htmlFor="email" className={labelClass}>Email</label>
+          <input type="email" id="email" className={inputClass} value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} required />
+        </div>
+        <div>
+          <label htmlFor="phone" className={labelClass}>Phone #</label>
+          <input type="tel" id="phone" className={inputClass} value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} required />
         </div>
 
         {message && (

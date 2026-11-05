@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import BookingHeader from "../components/bookings/BookingHeader";
 import { functions } from "../config/firebase";
 import { useBookingCart } from "../contexts/BookingCartContext";
-import { LEG_TYPE_LABELS, legDateTime, type CartLeg } from "../lib/cartTypes";
+import { getLegLabel, legDateTime, type CartLeg } from "../lib/cartTypes";
 import type { GuestInfo } from "../lib/cartTypes";
 
 interface SquareCard {
@@ -213,7 +213,7 @@ export default function Checkout() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
                               <p className="text-xs font-bold uppercase tracking-wide text-primary">
-                                {i + 1}. {LEG_TYPE_LABELS[leg.legType]}
+                                {i + 1}. {getLegLabel(leg)}
                               </p>
                               <p className="mt-1 text-sm text-ink">
                                 {leg.pickupLoc} &rarr; {leg.dropoffLoc}

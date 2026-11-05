@@ -72,10 +72,6 @@ export default function BookingDetails() {
                       <h5 className="font-display text-base font-medium text-ink sm:text-xl">Departure Time</h5>
                       <p className="text-body">{booking.departureTime}</p>
                     </div>
-                    <div className="space-y-3 sm:space-y-7">
-                      <h5 className="font-display text-base font-medium text-ink sm:text-xl">Return Trip</h5>
-                      <p className="text-body">{booking.returnTrip ? "Yes" : "No"}</p>
-                    </div>
                   </div>
                 </div>
               ) : (

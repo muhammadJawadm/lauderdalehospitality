@@ -51,8 +51,6 @@ export default function BookingSummary() {
               <div className="border-b border-gray-100" />
               <SummaryRow label="Phone no" value={booking.phone} />
               <div className="border-b border-gray-100" />
-              <SummaryRow label="Comments" value={booking.comments} />
-              <div className="border-b border-gray-100" />
               <SummaryRow label="Passengers" value={booking.adults} />
             </div>
 
@@ -69,8 +67,6 @@ export default function BookingSummary() {
               )}
               <div className="border-b border-gray-100" />
               <SummaryRow label="Total" value={`$${booking.totalPrice}`} />
-              <div className="border-b border-gray-100" />
-              <SummaryRow label="Transfer Type" value={booking.transferType} />
               <div className="border-b border-gray-100" />
               <SummaryRow label="From" value={booking.pickupLoc} />
               <div className="border-b border-gray-100" />

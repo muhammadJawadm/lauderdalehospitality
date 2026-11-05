@@ -38,14 +38,15 @@ export default function BookingOptions() {
 
   const handleAirportComplete = (leg: AirportLeg) => {
     addLeg(leg);
-    // "From Airport" (AP) = arrival, i.e. the FLL-to-hotel scenario the cruise follow-up question applies to.
-    setStage(leg.bookingType === "AP" ? "cruise-prompt" : "select");
-    if (leg.bookingType !== "AP") finishToCart();
+    if (leg.bookingType === "AP") {
+      setStage("cruise-prompt");
+    } else {
+      finishToCart();
+    }
   };
 
   const handleCruiseComplete = (leg: CruiseLeg) => {
     addLeg(leg);
-    // "To Cruise Port" (CS) = heading out on the cruise, i.e. where the post-cruise follow-up applies.
     if (leg.bookingType === "CS") {
       setStage("post-cruise-prompt");
     } else {

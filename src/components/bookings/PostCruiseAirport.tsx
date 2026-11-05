@@ -8,29 +8,27 @@ import CommonPassengers from "./CommonPassengers";
 import LoaderAnimation from "../LoaderAnimation";
 
 interface FormState {
-  comments: string;
   adults: string;
+  cruiseLine: string;
   cruiseShip: string;
   airline: string;
   pickupLoc: string;
   dropoffLoc: string;
 }
 
-const initialFormData: FormState = {
-  comments: "",
-  adults: "2",
-  cruiseShip: "",
-  airline: "",
-  pickupLoc: "",
-  dropoffLoc: "",
-};
-
 export default function PostCruiseAirport({ onComplete }: { onComplete: (leg: PostCruiseAirportLeg) => void }) {
   const { groupA: cruisePortLocations, groupB: airportLocations, isLoading: locationsLoading } = useLocations("Port", "Airport");
-  const { guestInfo, updateGuestInfo } = useBookingCart();
+  const { guestInfo, updateGuestInfo, lastCruise, lastPassengers } = useBookingCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [formData, setFormData] = useState<FormState>(initialFormData);
+  const [formData, setFormData] = useState<FormState>({
+    adults: lastPassengers,
+    cruiseLine: lastCruise.cruiseLine,
+    cruiseShip: lastCruise.cruiseShip,
+    airline: "",
+    pickupLoc: lastCruise.cruisePort,
+    dropoffLoc: "",
+  });
   const [contact, setContact] = useState({ fName: guestInfo.fName, lName: guestInfo.lName, email: guestInfo.email, phone: guestInfo.phone });
 
   const updateFormData = (newData: Partial<FormState>) => {
@@ -73,6 +71,58 @@ export default function PostCruiseAirport({ onComplete }: { onComplete: (leg: Po
       </div>
       <form className="space-y-7" onSubmit={handleSubmit}>
         <div className={sectionHeaderClass}>
+          <p className="text-lg">Cruise Details</p>
+        </div>
+        <div>
+          <label htmlFor="cruiseLine" className={labelClass}>Cruise Line</label>
+          <input type="text" id="cruiseLine" className={inputClass} value={formData.cruiseLine} onChange={(e) => updateFormData({ cruiseLine: e.target.value })} required />
+        </div>
+        <div>
+          <label htmlFor="cruiseShip" className={labelClass}>Cruise Ship</label>
+          <input type="text" id="cruiseShip" className={inputClass} placeholder="e.g. Icon of the Seas" value={formData.cruiseShip} onChange={(e) => updateFormData({ cruiseShip: e.target.value })} required />
+        </div>
+        <div>
+          <label htmlFor="cruise_port" className={labelClass}>Cruise Port</label>
+          <select
+            id="cruise_port"
+            className={inputClass}
+            value={formData.pickupLoc}
+            onChange={(e) => updateFormData({ pickupLoc: e.target.value })}
+            required
+          >
+            <option value="" disabled>Select cruise port</option>
+            {cruisePortLocations.map((location) => (
+              <option key={location.id} value={location.locationName}>{location.locationName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={sectionHeaderClass}>
+          <p className="text-lg">Flight Details</p>
+        </div>
+        <CommonAirports updateFormData={updateFormData} formData={formData} />
+        <div>
+          <label htmlFor="airport" className={labelClass}>Airport</label>
+          <select
+            id="airport"
+            className={inputClass}
+            value={formData.dropoffLoc}
+            onChange={(e) => updateFormData({ dropoffLoc: e.target.value })}
+            required
+          >
+            <option value="" disabled>Select airport</option>
+            {airportLocations.map((location) => (
+              <option key={location.id} value={location.locationName}>{location.locationName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={sectionHeaderClass}>
+          <p className="text-lg">No. Passengers</p>
+        </div>
+        <CommonPassengers value={formData.adults} onChange={(v) => updateFormData({ adults: v })} />
+
+        <div className={sectionHeaderClass}>
           <p className="text-lg">Personal Information</p>
         </div>
         <div>
@@ -90,58 +140,6 @@ export default function PostCruiseAirport({ onComplete }: { onComplete: (leg: Po
         <div>
           <label htmlFor="phone" className={labelClass}>Phone #</label>
           <input type="tel" id="phone" className={inputClass} value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} required />
-        </div>
-
-        <div className={sectionHeaderClass}>
-          <p className="text-lg">Cruise &amp; Flight Details</p>
-        </div>
-        <div>
-          <label htmlFor="cruiseShip" className={labelClass}>Cruise Ship</label>
-          <input type="text" id="cruiseShip" className={inputClass} placeholder="e.g. Icon of the Seas" value={formData.cruiseShip} onChange={(e) => updateFormData({ cruiseShip: e.target.value })} required />
-        </div>
-        <CommonAirports updateFormData={updateFormData} formData={formData} />
-
-        <div className={sectionHeaderClass}>
-          <p className="text-lg">No. Passengers</p>
-        </div>
-        <CommonPassengers value={formData.adults} onChange={(v) => updateFormData({ adults: v })} />
-
-        <div className={sectionHeaderClass}>
-          <p className="text-lg">Location</p>
-        </div>
-        <div>
-          <label htmlFor="cruise_port" className={labelClass}>Cruise Port</label>
-          <select
-            id="cruise_port"
-            className={inputClass}
-            value={formData.pickupLoc}
-            onChange={(e) => updateFormData({ pickupLoc: e.target.value })}
-            required
-          >
-            <option value="" disabled>Select cruise port</option>
-            {cruisePortLocations.map((location) => (
-              <option key={location.id} value={location.locationName}>{location.locationName}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="airport" className={labelClass}>Airport</label>
-          <select
-            id="airport"
-            className={inputClass}
-            value={formData.dropoffLoc}
-            onChange={(e) => updateFormData({ dropoffLoc: e.target.value })}
-            required
-          >
-            <option value="" disabled>Select airport</option>
-            {airportLocations.map((location) => (
-              <option key={location.id} value={location.locationName}>{location.locationName}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="comments" className={labelClass}>Comments</label>
-          <textarea id="comments" rows={4} className={inputClass} value={formData.comments} onChange={(e) => updateFormData({ comments: e.target.value })} />
         </div>
 
         {message && (

@@ -1,4 +1,4 @@
-const DEPARTURE_SLOTS = ["9:00 AM","9:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM", "12:00 PM","12:30 PM", "1:00 PM"];
+const DEPARTURE_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM"];
 
 const selectClass =
   "bg-white border border-gray-200 text-ink text-sm rounded-lg disabled:text-gray-300 disabled:cursor-not-allowed disabled:border-gray-100 outline-none focus:border-primary block w-full px-3.5 py-2.5 placeholder:text-sm placeholder:font-medium";

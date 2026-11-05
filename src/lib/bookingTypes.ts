@@ -11,25 +11,20 @@ export interface BookingState {
   lName: string;
   email: string;
   phone: string;
-  comments: string;
   pickupLoc: string;
   dropoffLoc: string;
-  transferType: string;
   perPersonPrice: number;
   totalPrice: number;
   serviceFee?: number;
-  // Airport-specific
   pickupDate?: string;
   pickupTime?: string;
   airline?: string;
   arrival?: string;
   flightNum?: string;
-  // Cruise-specific
   cruiseDate?: string;
   cruiseLine?: string;
   cruiseShip?: string;
   departureTime?: string;
-  returnTrip?: boolean;
 }
 
 export const BOOKING_TYPE_LABELS: Record<BookingState["bookingType"], string> = {

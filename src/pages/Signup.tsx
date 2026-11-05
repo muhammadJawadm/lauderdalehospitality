@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaUser, FaPhone } from "react-icons/fa";
 import BookingHeader from "../components/bookings/BookingHeader";
 import { useAuth } from "../contexts/AuthContext";
 import { inputClass, labelClass, primaryButtonClass } from "../lib/bookingTypes";
@@ -10,6 +10,9 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
+  const [fName, setFName] = useState("");
+  const [lName, setLName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,7 +30,7 @@ export default function Signup() {
 
     try {
       setSubmitting(true);
-      await signup(email, password);
+      await signup(email, password, { fName, lName, phone });
       toast.success("Account created! Let's get you booked.", { position: "bottom-right", autoClose: 2000 });
       navigate("/booking", { replace: true });
     } catch (err) {
@@ -49,6 +52,38 @@ export default function Signup() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-10 space-y-5 rounded-2xl border border-gray-100 bg-white p-7 shadow-sm">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="first_name" className={labelClass}>First Name</label>
+              <div className="relative">
+                <FaUser className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-primary" size={13} />
+                <input
+                  type="text"
+                  id="first_name"
+                  className={inputClass + " pl-9"}
+                  placeholder="First Name"
+                  value={fName}
+                  onChange={(e) => setFName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="last_name" className={labelClass}>Last Name</label>
+              <div className="relative">
+                <FaUser className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-primary" size={13} />
+                <input
+                  type="text"
+                  id="last_name"
+                  className={inputClass + " pl-9"}
+                  placeholder="Last Name"
+                  value={lName}
+                  onChange={(e) => setLName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
           <div>
             <label htmlFor="email" className={labelClass}>Email Address</label>
             <div className="relative">
@@ -60,6 +95,21 @@ export default function Signup() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="phone" className={labelClass}>Phone Number</label>
+            <div className="relative">
+              <FaPhone className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-primary" size={13} />
+              <input
+                type="tel"
+                id="phone"
+                className={inputClass + " pl-9"}
+                placeholder="(555) 123-4567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>
