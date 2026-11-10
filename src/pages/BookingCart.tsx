@@ -18,7 +18,7 @@ function EditLegModal({ leg, onSave, onCancel }: { leg: CartLeg; onSave: (update
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const update = (partial: Partial<typeof draft>) => setDraft((prev) => ({ ...prev, ...partial }));
+  const update = (partial: Record<string, unknown>) => setDraft((prev) => ({ ...prev, ...partial }) as CartLeg);
 
   const handleSave = async () => {
     setSaving(true);
