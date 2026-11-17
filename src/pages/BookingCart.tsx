@@ -113,6 +113,9 @@ export default function BookingCart() {
 
   const totalServiceFees = legs.reduce((sum, leg) => sum + (leg.serviceFee || 0), 0);
   const fareTotal = totalPrice - totalServiceFees;
+  const TAX_RATE = 0.07;
+  const tax = Math.round(totalPrice * TAX_RATE * 100) / 100;
+  const grandTotal = Math.round((totalPrice + tax) * 100) / 100;
 
   const editingLeg = editingLegId ? legs.find((l) => l.id === editingLegId) : null;
 
@@ -242,9 +245,13 @@ export default function BookingCart() {
                     <span>${totalServiceFees}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm text-white/70">
+                  <span>Sales Tax (7%)</span>
+                  <span>${tax.toFixed(2)}</span>
+                </div>
                 <div className="flex items-end justify-between border-t border-white/20 pt-3">
                   <span className="text-xs font-bold uppercase tracking-wide text-white/70">Grand Total</span>
-                  <span className="font-display text-2xl font-extrabold">${totalPrice}</span>
+                  <span className="font-display text-2xl font-extrabold">${grandTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>

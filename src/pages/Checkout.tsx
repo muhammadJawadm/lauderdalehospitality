@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { httpsCallable } from "firebase/functions";
 import { toast } from "react-toastify";
 import BookingHeader from "../components/bookings/BookingHeader";
-import { functions } from "../config/firebase";
+import { auth } from "../config/firebase";
 import { useBookingCart } from "../contexts/BookingCartContext";
 import { getLegLabel, legDateTime, type CartLeg } from "../lib/cartTypes";
 import type { GuestInfo } from "../lib/cartTypes";
+
+const FUNCTION_BASE = "https://us-central1-lhg-by-duseca.cloudfunctions.net";
 
 interface SquareCard {
   attach: (element: HTMLElement) => Promise<void>;
@@ -86,6 +87,9 @@ export default function Checkout() {
 
   const totalServiceFees = order.legs.reduce((s, l) => s + (l.serviceFee || 0), 0);
   const fareTotal = order.totalPrice - totalServiceFees;
+  const TAX_RATE = 0.07;
+  const tax = Math.round(order.totalPrice * TAX_RATE * 100) / 100;
+  const grandTotal = Math.round((order.totalPrice + tax) * 100) / 100;
 
   useEffect(() => {
     if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) {
@@ -131,19 +135,30 @@ export default function Checkout() {
         return;
       }
 
-      const createCombinedPayment = httpsCallable<
-        { sourceId: string; legs: CartLeg[]; guestInfo: GuestInfo },
-        CombinedPaymentResponse
-      >(functions, "createCombinedPayment");
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) {
+        toast.error("You must be signed in to pay.", { position: "bottom-right", autoClose: 3000 });
+        return;
+      }
 
-      const result = await createCombinedPayment({
-        sourceId: tokenResult.token!,
-        legs: order.legs,
-        guestInfo: order.guestInfo,
+      const res = await fetch(`${FUNCTION_BASE}/createCombinedPayment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          sourceId: tokenResult.token!,
+          legs: order.legs,
+          guestInfo: order.guestInfo,
+        }),
       });
 
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Payment failed.");
+
       clearCart();
-      setConfirmation(result.data);
+      setConfirmation(json.result as CombinedPaymentResponse);
       toast.success("Payment successful! Your booking is confirmed.", {
         position: "bottom-right",
         autoClose: 3000,
@@ -174,7 +189,7 @@ export default function Checkout() {
             </div>
             <h5 className="font-display text-2xl font-semibold text-ink">Booking Confirmed!</h5>
             <p className="text-body">
-              Your payment of <span className="font-semibold text-ink">${confirmation.totalCharged}</span> was
+              Your payment of <span className="font-semibold text-ink">${confirmation.totalCharged.toFixed(2)}</span> was
               successful and {confirmation.bookingIds.length === 1 ? "your transfer is" : `all ${confirmation.bookingIds.length} transfers are`} confirmed.
             </p>
             <div className="space-y-1 text-sm text-body">
@@ -275,11 +290,15 @@ export default function Checkout() {
                         <span className="font-medium text-ink">${totalServiceFees}</span>
                       </div>
                     )}
+                    <div className="flex justify-between">
+                      <span className="text-body">Sales Tax (7%)</span>
+                      <span className="font-medium text-ink">${tax.toFixed(2)}</span>
+                    </div>
                   </div>
                   <div className="border-t border-gray-100 pt-4">
                     <div className="flex items-end justify-between">
                       <span className="font-display text-base font-bold text-ink">Total</span>
-                      <span className="font-display text-2xl font-extrabold text-ink">${order.totalPrice}</span>
+                      <span className="font-display text-2xl font-extrabold text-ink">${grandTotal.toFixed(2)}</span>
                     </div>
                   </div>
                   <button
@@ -287,7 +306,7 @@ export default function Checkout() {
                     disabled={!cardReady || submitting || !!configError}
                     className="w-full cursor-pointer rounded-xl bg-primary py-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {submitting ? "Processing..." : `Pay $${order.totalPrice}`}
+                    {submitting ? "Processing..." : `Pay $${grandTotal.toFixed(2)}`}
                   </button>
                 </div>
               </div>
